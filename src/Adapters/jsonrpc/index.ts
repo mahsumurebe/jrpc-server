@@ -29,7 +29,7 @@ export default class JSONRPC implements IAdapter {
     }
 
     convert(data: any, method?: IJSONRPCMethod): IResponse | IErrorResponse {
-        const id = method && method.id ? method.id : null;
+        const id = method && method.id ? method.id : 1;
         const convertErr = (e: RpcError | Error): IErrorInline => {
             const out: IErrorInline = {
                 message: null,
