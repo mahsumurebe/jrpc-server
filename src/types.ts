@@ -1,11 +1,19 @@
 export interface IRPCServerConfig {
-    bind: string;
+    hostname: string;
     port: number;
-    path?: string;
+    pathname?: string;
+    https?: {
+        use: boolean;
+        certFile: string;
+        privateKey: string;
+    }
 }
 
 export interface IListenResponse {
-    bind: string;
+    scheme: 'http' | 'https';
+    hostname: string;
     port: number;
-    path: string;
+    pathname: string;
+
+    toString(): string;
 }
