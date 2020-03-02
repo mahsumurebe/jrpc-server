@@ -5,31 +5,68 @@ import {RpcError, RpcErrorCode, RpcErrorMessage} from './Core/Errors';
 import {IAdapter, IMethod} from './Adapters/types';
 import Methods from './Core/Methods';
 import * as http from 'http';
+import * as https from 'https';
 import {EventEmitter} from 'events';
 import bodyParser from 'body-parser';
 import JSONRPC from './Adapters/jsonrpc';
 
 const configDefault: IRPCServerConfig = {
-    bind: '127.0.0.1',
+    hostname: '127.0.0.1',
     port: 8999,
-    path: '/',
+    pathname: '/',
+    https: {
+        use: false,
+        certFile: null,
+        privateKey: null,
+    },
 };
 
 export default class RPCServer extends EventEmitter {
     public adapter: IAdapter = new JSONRPC();
     public methods = new Methods();
-    protected server: core.Express;
-    private httpServer: http.Server;
+    protected expressServer: core.Express;
+    private server: http.Server | https.Server;
 
-    constructor(public readonly config: IRPCServerConfig = configDefault) {
+    constructor(public config?: IRPCServerConfig) {
         super();
         const self = this;
-        self.config.path = self.config.path || '/';
-        self.server = express();
+        self.config = {
+            ...configDefault,
+            ...self.config,
+        };
+
+        self.expressServer = express();
+
+        if (self.config.https.use) {
+            if (!self.config.https.certFile) {
+                throw new Error('Certificate file is not defined.');
+            } else if (!self.config.https.privateKey) {
+                throw new Error('Private Key is not defined.');
+            }
 
 
-        self.server
+            const fs = require('fs');
+
+            if (!fs.existsSync(self.config.https.certFile)) {
+                throw new Error('Certificate file not found.');
+            } else if (!fs.existsSync(self.config.https.privateKey)) {
+                throw new Error('Private Key file not found.');
+            }
+
+            const privateKey = fs.readFileSync(self.config.https.privateKey, 'utf8');
+            const certificate = fs.readFileSync(self.config.https.certFile, 'utf8');
+
+            const credentials = {key: privateKey, cert: certificate};
+
+            this.server = https.createServer(credentials, this.expressServer);
+        } else {
+            this.server = http.createServer(this.expressServer);
+        }
+
+        self.expressServer
             .use((req, res, next) => {
+                // Allow only POST requests.
+
                 if (req.method.toUpperCase() !== 'POST') {
                     self.sendOutput(res, RpcError.fromJSON({
                         code: RpcErrorCode.PARSE_ERROR,
@@ -39,9 +76,9 @@ export default class RPCServer extends EventEmitter {
                 }
                 next();
             });
-        self.server
+        self.expressServer
             .use(bodyParser.json());
-        self.server.use((err, req, res: core.Response, next) => {
+        self.expressServer.use((err, req, res: core.Response, next) => {
             let body = undefined;
             if (!!err) {
                 const errKeys = Object.keys(err);
@@ -61,7 +98,7 @@ export default class RPCServer extends EventEmitter {
                 next(err, req, res);
             }
         });
-        self.server
+        self.expressServer
             .use((req, res, next) => {
                 if (!req.body) {
                     this.sendOutput(res, RpcError.fromJSON({
@@ -93,9 +130,8 @@ export default class RPCServer extends EventEmitter {
 
     private registerPaths() {
         const self = this;
-        // Allow only POST requests.
-        this.server
-            .post(this.config.path, (req: Request<any>, res) => {
+        this.expressServer
+            .post('/' + self.config.pathname.replace(/^[\/|\\]+/g, ''), (req: Request<any>, res) => {
                 this.adapter
                     .checkRequest(req.body)
                     .then<Array<IMethod>>(methods => {
@@ -128,13 +164,17 @@ export default class RPCServer extends EventEmitter {
     listen(): Promise<IListenResponse> {
         const self = this;
         const addressInfo: IListenResponse = {
-            bind: this.config.bind,
+            hostname: this.config.hostname,
             port: this.config.port,
-            path: this.config.path,
+            pathname: this.config.pathname,
+            scheme: this.config.https.use ? 'https' : 'http',
+            toString(): string {
+                return `${this.scheme}://${this.hostname}:${this.port}/${(this.pathname || '/').replace(/^[\/|\\]+/g, '')}`;
+            },
         };
         return new Promise<IListenResponse>((resolve, reject) => {
             try {
-                self.httpServer = this.server.listen(this.config.port, this.config.bind, () => {
+                self.server = this.server.listen(this.config.port, this.config.hostname, () => {
                     resolve();
                 });
             } catch (e) {
@@ -161,7 +201,7 @@ export default class RPCServer extends EventEmitter {
     close(): Promise<true> {
         const self = this;
         return new Promise<true>((resolve, reject) => {
-            this.httpServer.close(err => {
+            this.server.close(err => {
                 if (!err) {
                     resolve();
                     return;
