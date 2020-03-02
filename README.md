@@ -10,7 +10,7 @@ It is used to quickly create JSONRPC Server. Method definition is very simple. W
 
 ## Install
 ```
-npm install jsonrpc-server
+npm install jrpc-server
 ```
 
 ## Usage
