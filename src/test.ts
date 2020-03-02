@@ -1,18 +1,15 @@
-import JSONRPC from './Adapters/jsonrpc';
 import RPCServer from './index';
 
 const port = 3000;
 
-let parser: JSONRPC;
-let server: RPCServer<JSONRPC>;
+let server: RPCServer;
 
 async function init() {
-    parser = new JSONRPC();
     console.log('starting server');
     server = new RPCServer({
         bind: '127.0.0.1',
         port,
-    }, parser);
+    });
 
     server.on('listening', address => {
         console.log(`Listening on http://${address.bind}:${address.port}${address.path}`);
@@ -24,7 +21,9 @@ async function init() {
     await server.listen();
     console.log('add method');
     server.methods.add('help', () => {
-        return 'DONE';
+        return {
+            item: 'DONE',
+        };
     });
 }
 

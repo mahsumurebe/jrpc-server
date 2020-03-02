@@ -19,14 +19,13 @@ export default class Methods {
     }
 
     call<T = any>(method: string, ...args: any): Promise<T> {
-        if (!this.exists(method)) {
-            throw RpcError.fromJSON({
-                code: RpcErrorCode.METHOD_NOT_FOUND,
-                message: RpcErrorMessage.METHOD_NOT_FOUND,
-            });
-        }
-
         return new Promise<T>((resolve, reject) => {
+            if (!this.exists(method)) {
+                return reject(RpcError.fromJSON({
+                    code: RpcErrorCode.METHOD_NOT_FOUND,
+                    message: RpcErrorMessage.METHOD_NOT_FOUND,
+                }));
+            }
             const fn = this.methods[method];
             try {
                 resolve(fn(...args));

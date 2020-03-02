@@ -1,5 +1,5 @@
 import {IMethod} from '../types';
 
-export interface IJSONRPCMethods extends IMethod {
+export interface IJSONRPCMethod extends IMethod {
     id: number;
 }

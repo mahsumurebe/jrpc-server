@@ -1,95 +1,117 @@
 import {IListenResponse, IRPCServerConfig} from './types';
 import * as core from 'express-serve-static-core';
-import express from 'express';
+import express, {Request} from 'express';
 import {RpcError, RpcErrorCode, RpcErrorMessage} from './Core/Errors';
-import {IAdapters, IMethod} from './Adapters/types';
+import {IAdapter, IMethod} from './Adapters/types';
 import Methods from './Core/Methods';
 import * as http from 'http';
 import {EventEmitter} from 'events';
+import bodyParser from 'body-parser';
+import JSONRPC from './Adapters/jsonrpc';
 
 const configDefault: IRPCServerConfig = {
     bind: '127.0.0.1',
     port: 8999,
     path: '/',
 };
-import bodyParser = require('body-parser');
 
-export default class RPCServer<Adapter extends IAdapters> extends EventEmitter {
+export default class RPCServer extends EventEmitter {
+    public adapter: IAdapter = new JSONRPC();
     public methods = new Methods();
     protected server: core.Express;
     private httpServer: http.Server;
 
-    constructor(public readonly config: IRPCServerConfig = configDefault, public readonly adapter: Adapter) {
+    constructor(public readonly config: IRPCServerConfig = configDefault) {
         super();
-        this.config.path = this.config.path || '/';
-        this.server = express();
+        const self = this;
+        self.config.path = self.config.path || '/';
+        self.server = express();
 
-        this.server.set('trust proxy', true);
-        this.server.use(bodyParser.urlencoded({extended: false}));
-        this.server.use(bodyParser.json());
-        this.server
+
+        self.server
             .use((req, res, next) => {
                 if (req.method.toUpperCase() !== 'POST') {
-                    const error = RpcError.fromJSON({
+                    self.sendOutput(res, RpcError.fromJSON({
                         code: RpcErrorCode.PARSE_ERROR,
                         message: 'Server only allows POST requests.',
-                    });
-                    res
-                        .send(error)
-                        .end();
+                    }));
+                    return;
                 }
                 next();
             });
-        this.server
-            .use((err, req, res, next) => {
-                if (err instanceof SyntaxError) {
-                    next(RpcError.fromJSON({
-                        code: RpcErrorCode.PARSE_ERROR,
-                        message: RpcErrorMessage.PARSE_ERROR,
-                    }));
-                } else {
-                    next(err, req, res);
+        self.server
+            .use(bodyParser.json());
+        self.server.use((err, req, res: core.Response, next) => {
+            let body = undefined;
+            if (!!err) {
+                const errKeys = Object.keys(err);
+                if (errKeys.indexOf('body')) {
+                    body = err['body'];
                 }
-            });
-        this.server
+            }
+            if (err instanceof SyntaxError) {
+                this.sendOutput(res, RpcError.fromJSON({
+                    code: RpcErrorCode.INVALID_REQUEST,
+                    message: RpcErrorMessage.INVALID_REQUEST,
+                    parent: err,
+                    data: body,
+                }));
+                return;
+            } else {
+                next(err, req, res);
+            }
+        });
+        self.server
             .use((req, res, next) => {
                 if (!req.body) {
-                    return next(RpcError.fromJSON({
-                        code: RpcErrorCode.INVALID_PARAMS,
-                        message: RpcErrorMessage.INVALID_PARAMS,
+                    this.sendOutput(res, RpcError.fromJSON({
+                        code: RpcErrorCode.INVALID_REQUEST,
+                        message: RpcErrorMessage.INVALID_REQUEST,
                     }));
+                    return;
                 }
-
+                next();
             });
+    }
+
+    private sendOutput(res: core.Response, data: any, method?: IMethod) {
+        if (data instanceof Error) {
+            if (!(data instanceof RpcError)) {
+                data = RpcError.fromJSON({
+                    code: RpcErrorCode.INTERNAL_ERROR,
+                    message: RpcErrorMessage.INTERNAL_ERROR,
+                    parent: data,
+                });
+            }
+            if (data instanceof RpcError) {
+                res.status(data.httpStatusCode);
+            }
+        }
+        res.send(this.adapter.convert(data, method))
+            .end();
     }
 
     private registerPaths() {
         const self = this;
-
         // Allow only POST requests.
         this.server
-            .post(this.config.path, (req, res) => {
+            .post(this.config.path, (req: Request<any>, res) => {
                 this.adapter
-                    .parseRequest(req.body)
-                    .then(request => {
-                        if (!(request instanceof Array)) {
-                            request = [request];
-                        }
-                        return request;
-                    })
+                    .checkRequest(req.body)
                     .then<Array<IMethod>>(methods => {
                         const promises: Array<Promise<any>> = [];
                         for (const method of methods) {
+                            const params = method.params instanceof Array ? method.params : [method.params];
                             const promise = self
                                 .methods
-                                .call(method.method, ...method.params)
+                                .call(method.method, ...params)
                                 .then(data => {
                                     self.emit('response', data, method.method, method.params);
-                                    res.send(data)
-                                        .end();
+                                    self.sendOutput(res, data, method);
                                 })
                                 .catch(e => {
                                     self.emit('response', e, method.method, method.params);
+                                    self.sendOutput(res, e, method);
                                     throw e;
                                 });
                             promises.push(promise);
@@ -98,15 +120,7 @@ export default class RPCServer<Adapter extends IAdapters> extends EventEmitter {
 
                     })
                     .catch(e => {
-                        if (!(e instanceof RpcError)) {
-                            e = RpcError.fromJSON({
-                                code: RpcErrorCode.INTERNAL_ERROR,
-                                message: RpcErrorMessage.INTERNAL_ERROR,
-                            });
-                        }
-                        res.send(e)
-                            .status(e.httpStatusCode || 500)
-                            .end();
+                        this.sendOutput(res, e);
                     });
             });
     }
@@ -120,7 +134,7 @@ export default class RPCServer<Adapter extends IAdapters> extends EventEmitter {
         };
         return new Promise<IListenResponse>((resolve, reject) => {
             try {
-                self.httpServer = this.server.listen(() => {
+                self.httpServer = this.server.listen(this.config.port, this.config.bind, () => {
                     resolve();
                 });
             } catch (e) {

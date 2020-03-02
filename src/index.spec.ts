@@ -1,40 +1,27 @@
 import RPCServer from './index';
-import JSONRPC from './Adapters/jsonrpc';
 import Methods from './Core/Methods';
 
 const port = 3000;
-let parser: JSONRPC;
-let server: RPCServer<JSONRPC>;
+let server: RPCServer;
 
 describe('Testing server', () => {
     beforeAll(() => {
-        parser = new JSONRPC();
         server = new RPCServer({
             bind: '127.0.0.1',
             port,
-        }, parser);
+        });
     });
 
     it('should return RPCServer instance', () => {
         expect(server).toBeInstanceOf(RPCServer);
     });
 
-    it('should RPCServer.adapter property have JSONRPC interface', () => {
-        expect(server.adapter).toBeInstanceOf(JSONRPC);
-    });
-
     it('should RPCServer.method property have Methods interface', () => {
         expect(server.methods).toBeInstanceOf(Methods);
     });
 
-    it(`should server listen ${port} port.`, async (done) => {
-        try {
-            const addressInfo = await server.listen();
-            expect(addressInfo.port).toEqual(port);
-            done();
-        } catch (e) {
-            done(e);
-        }
+    it(`should server listen ${port} port.`, () => {
+        expect(server.listen()).resolves.toEqual(expect.objectContaining({port}));
     });
 
     it('method should be added', () => {
@@ -43,6 +30,7 @@ describe('Testing server', () => {
         });
         expect(server.methods.names()).toEqual(expect.arrayContaining(['help']));
     });
+
 
     it('added method must be able to call', async (done) => {
         try {
@@ -53,4 +41,5 @@ describe('Testing server', () => {
             done(e);
         }
     });
+
 });

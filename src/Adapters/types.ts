@@ -3,8 +3,26 @@ export interface IMethod {
     params: Array<any>
 }
 
-export interface IAdapters {
-    parseRequest(data: string): Promise<IMethod | Array<IMethod>>
+export interface IErrorInline {
+    code?: number;
+    message: string;
+    data?: IErrorInline
+    stack?: string
+}
 
-    validRequest(data: string): Promise<boolean>;
+export interface IErrorResponse {
+    id: number;
+    error: IErrorInline,
+    result?: null
+}
+
+export interface IResponse<R = any> {
+    id: number;
+    result: R
+}
+
+export interface IAdapter {
+    checkRequest(data: IMethod | Array<IMethod>): Promise<Array<IMethod>>;
+
+    convert(data: any, method?: IMethod);
 }
