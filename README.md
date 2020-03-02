@@ -45,3 +45,15 @@ server.listen()
     .then(address=>console.log(`Listening on ${address.toString()}`));
 ```
 
+# Testing
+
+cURL isteği gönderip test etmek için aşağıdaki kodu kullanabilirsiniz.
+
+```shell script
+curl -H "Content-Type: application/json" -d "{\"id\":2,\"method\":\"sum\",\"params\":[1,2]}" http://127.0.0.1:3000
+```
+***Response:***
+```json
+{"id":2,"result":3}
+```
+
