@@ -1,3 +1,5 @@
+import {IMethod} from './Adapters/types';
+
 export interface IRPCServerConfig {
     hostname: string;
     port: number;
@@ -17,3 +19,5 @@ export interface IListenResponse {
 
     toString(): string;
 }
+
+export type TDataPromise<T = IMethod> = { method: T, data: any }

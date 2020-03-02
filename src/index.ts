@@ -1,8 +1,8 @@
-import {IListenResponse, IRPCServerConfig} from './types';
+import {IListenResponse, IRPCServerConfig, TDataPromise} from './types';
 import * as core from 'express-serve-static-core';
 import express, {Request} from 'express';
 import {RpcError, RpcErrorCode, RpcErrorMessage} from './Core/Errors';
-import {IAdapter, IMethod} from './Adapters/types';
+import {IAdapter} from './Adapters/types';
 import Methods from './Core/Methods';
 import * as http from 'http';
 import * as https from 'https';
@@ -68,10 +68,15 @@ export default class RPCServer extends EventEmitter {
                 // Allow only POST requests.
 
                 if (req.method.toUpperCase() !== 'POST') {
-                    self.sendOutput(res, RpcError.fromJSON({
-                        code: RpcErrorCode.PARSE_ERROR,
-                        message: 'Server only allows POST requests.',
-                    }));
+                    self.sendOutput(res, [
+                        {
+                            data: RpcError.fromJSON({
+                                code: RpcErrorCode.PARSE_ERROR,
+                                message: 'Server only allows POST requests.',
+                            }),
+                            method: null,
+                        },
+                    ]);
                     return;
                 }
                 next();
@@ -87,12 +92,17 @@ export default class RPCServer extends EventEmitter {
                 }
             }
             if (err instanceof SyntaxError) {
-                this.sendOutput(res, RpcError.fromJSON({
-                    code: RpcErrorCode.INVALID_REQUEST,
-                    message: RpcErrorMessage.INVALID_REQUEST,
-                    parent: err,
-                    data: body,
-                }));
+                this.sendOutput(res, [
+                    {
+                        data: RpcError.fromJSON({
+                            code: RpcErrorCode.INVALID_REQUEST,
+                            message: RpcErrorMessage.INVALID_REQUEST,
+                            parent: err,
+                            data: body,
+                        }),
+                        method: null,
+                    },
+                ]);
                 return;
             } else {
                 next(err, req, res);
@@ -101,30 +111,38 @@ export default class RPCServer extends EventEmitter {
         self.expressServer
             .use((req, res, next) => {
                 if (!req.body) {
-                    this.sendOutput(res, RpcError.fromJSON({
-                        code: RpcErrorCode.INVALID_REQUEST,
-                        message: RpcErrorMessage.INVALID_REQUEST,
-                    }));
+                    this.sendOutput(res, [
+                        {
+                            data: RpcError.fromJSON({
+                                code: RpcErrorCode.INVALID_REQUEST,
+                                message: RpcErrorMessage.INVALID_REQUEST,
+                            }),
+                            method: null,
+                        },
+                    ]);
                     return;
                 }
                 next();
             });
     }
 
-    private sendOutput(res: core.Response, data: any, method?: IMethod) {
-        if (data instanceof Error) {
-            if (!(data instanceof RpcError)) {
-                data = RpcError.fromJSON({
-                    code: RpcErrorCode.INTERNAL_ERROR,
-                    message: RpcErrorMessage.INTERNAL_ERROR,
-                    parent: data,
-                });
-            }
-            if (data instanceof RpcError) {
-                res.status(data.httpStatusCode);
+    private sendOutput(res: core.Response, responses: Array<TDataPromise>) {
+        for (let item of responses) {
+            if (item.data instanceof Error) {
+                if (!(item.data instanceof RpcError)) {
+                    item.data = RpcError.fromJSON({
+                        code: RpcErrorCode.INTERNAL_ERROR,
+                        message: RpcErrorMessage.INTERNAL_ERROR,
+                        parent: item.data,
+                    });
+                }
+                if (item.data instanceof RpcError) {
+                    res.status(item.data.httpStatusCode);
+                }
             }
         }
-        res.send(this.adapter.convert(data, method))
+        const converted = this.adapter.convert(responses);
+        res.send(converted.length === 1 ? converted[0] : converted)
             .end();
     }
 
@@ -134,26 +152,46 @@ export default class RPCServer extends EventEmitter {
             .post('/' + self.config.pathname.replace(/^[\/|\\]+/g, ''), (req: Request<any>, res) => {
                 this.adapter
                     .checkRequest(req.body)
-                    .then<Array<IMethod>>(methods => {
+                    .then(methods => {
                         const promises: Array<Promise<any>> = [];
                         for (const method of methods) {
                             const params = method.params instanceof Array ? method.params : [method.params];
+                            method.params = params;
                             const promise = self
                                 .methods
                                 .call(method.method, ...params)
                                 .then(data => {
-                                    self.emit('response', data, method.method, method.params);
-                                    self.sendOutput(res, data, method);
+                                    return {
+                                        method,
+                                        data,
+                                    };
                                 })
                                 .catch(e => {
                                     self.emit('response', e, method.method, method.params);
-                                    self.sendOutput(res, e, method);
+                                    self.sendOutput(res, [
+                                        {
+                                            data: e,
+                                            method,
+                                        },
+                                    ]);
                                     throw e;
                                 });
                             promises.push(promise);
                         }
-                        return Promise.all(promises);
-
+                        return Promise.all<TDataPromise>(promises);
+                    })
+                    .then(data => {
+                        if (!data.length) {
+                            self.emit('response', data);
+                            return self.sendOutput(res, null);
+                        }
+                        if (data.length === 1) {
+                            const item = data[0];
+                            self.emit('response', data, item.method.method, item.method.params);
+                            return self.sendOutput(res, data);
+                        }
+                        self.emit('response', data);
+                        self.sendOutput(res, data);
                     })
                     .catch(e => {
                         this.sendOutput(res, e);
@@ -280,8 +318,9 @@ export default class RPCServer extends EventEmitter {
     }
 
     emit(event: 'error', error: RpcError): boolean;
-    emit(event: 'response', e: RpcError, method: string, params: Array<any>): boolean;
-    emit(event: 'response', data: any, method: string, params: Array<any>): boolean;
+    emit(event: 'response', e: RpcError, method?: string, params?: Array<any>): boolean;
+    emit(event: 'response', data: TDataPromise): boolean;
+    emit(event: 'response', data: any, method?: string, params?: Array<any>): boolean;
     emit(event: 'request', method: string, params: Array<any>): boolean;
     emit(event: 'listening', address: IListenResponse): boolean;
     emit(event: 'close'): boolean;

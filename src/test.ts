@@ -25,6 +25,9 @@ async function init() {
             item: 'DONE',
         };
     });
+    server.methods.add('sum', (a: number, b: number) => {
+        return a + b;
+    });
 }
 
 init();

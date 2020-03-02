@@ -1,6 +1,7 @@
 import {IAdapter, IErrorInline, IErrorResponse, IResponse} from '../types';
 import {RpcError, RpcErrorCode, RpcErrorMessage} from '../../Core/Errors';
 import {IJSONRPCMethod} from './types';
+import {TDataPromise} from '../../types';
 
 export default class JSONRPC implements IAdapter {
 
@@ -28,8 +29,7 @@ export default class JSONRPC implements IAdapter {
         }
     }
 
-    convert(data: any, method?: IJSONRPCMethod): IResponse | IErrorResponse {
-        const id = method && method.id ? method.id : 1;
+    convert(data: Array<TDataPromise<IJSONRPCMethod>>): Array<IResponse | IErrorResponse> {
         const convertErr = (e: RpcError | Error): IErrorInline => {
             const out: IErrorInline = {
                 message: null,
@@ -47,24 +47,27 @@ export default class JSONRPC implements IAdapter {
 
             return out;
         };
-        if (data instanceof Error) {
-            if (!(data instanceof RpcError)) {
-                data = RpcError.fromJSON({
-                    code: RpcErrorCode.INTERNAL_ERROR,
-                    message: RpcErrorMessage.INTERNAL_ERROR,
-                    parent: data,
-                });
-            }
-            return {
-                id,
-                result: null,
-                error: convertErr(data),
-            };
-        }
 
-        return {
-            id,
-            result: data,
-        };
+        return data.map(item => {
+            if (item.data instanceof Error) {
+                if (!(item.data instanceof RpcError)) {
+                    item.data = RpcError.fromJSON({
+                        code: RpcErrorCode.INTERNAL_ERROR,
+                        message: RpcErrorMessage.INTERNAL_ERROR,
+                        parent: item.data,
+                    });
+                }
+                return {
+                    id: item.method.id,
+                    result: null,
+                    error: convertErr(item.data),
+                };
+            }
+
+            return {
+                id: item.method.id,
+                result: item.data,
+            };
+        });
     }
 }
