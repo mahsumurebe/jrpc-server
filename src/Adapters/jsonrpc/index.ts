@@ -49,6 +49,7 @@ export default class JSONRPC implements IAdapter {
         };
 
         return data.map(item => {
+            const id = item.method && item.method.id ? item.method.id : 1;
             if (item.data instanceof Error) {
                 if (!(item.data instanceof RpcError)) {
                     item.data = RpcError.fromJSON({
@@ -58,14 +59,14 @@ export default class JSONRPC implements IAdapter {
                     });
                 }
                 return {
-                    id: item.method.id,
+                    id,
                     result: null,
                     error: convertErr(item.data),
                 };
             }
 
             return {
-                id: item.method.id,
+                id,
                 result: item.data,
             };
         });
