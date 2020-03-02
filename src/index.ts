@@ -2,7 +2,7 @@ import {IListenResponse, IRPCServerConfig, TDataPromise} from './types';
 import * as core from 'express-serve-static-core';
 import express, {Request} from 'express';
 import {RpcError, RpcErrorCode, RpcErrorMessage} from './Core/Errors';
-import {IAdapter} from './Adapters/types';
+import {IAdapter, IMethod} from './Adapters/types';
 import Methods from './Core/Methods';
 import * as http from 'http';
 import * as https from 'https';
@@ -19,6 +19,7 @@ const configDefault: IRPCServerConfig = {
         certFile: null,
         privateKey: null,
     },
+    middleware: [],
 };
 
 export default class RPCServer extends EventEmitter {
@@ -63,10 +64,14 @@ export default class RPCServer extends EventEmitter {
             this.server = http.createServer(this.expressServer);
         }
 
+        for (const middleware of self.config.middleware) {
+            this.expressServer
+                .use(middleware);
+        }
+
         self.expressServer
             .use((req, res, next) => {
                 // Allow only POST requests.
-
                 if (req.method.toUpperCase() !== 'POST') {
                     self.sendOutput(res, [
                         {
@@ -81,6 +86,7 @@ export default class RPCServer extends EventEmitter {
                 }
                 next();
             });
+
         self.expressServer
             .use(bodyParser.json());
         self.expressServer.use((err, req, res: core.Response, next) => {
@@ -154,9 +160,16 @@ export default class RPCServer extends EventEmitter {
                     .checkRequest(req.body)
                     .then(methods => {
                         const promises: Array<Promise<any>> = [];
+                        if (methods.length === 1) {
+                            const method = methods[0];
+                            self.emit('request', method.method, method.params);
+                        } else {
+                            self.emit('request', methods);
+                        }
                         for (const method of methods) {
                             const params = method.params instanceof Array ? method.params : [method.params];
                             method.params = params;
+
                             const promise = self
                                 .methods
                                 .call(method.method, ...params)
@@ -259,9 +272,11 @@ export default class RPCServer extends EventEmitter {
 
     // Event Emitter Typings
     addListener(event: 'error', listener: (error: RpcError) => void): this;
-    addListener(event: 'response', listener: (data: any, method: string, params: Array<any>) => void): this;
     addListener(event: 'response', listener: (error: RpcError, method: string, params: Array<any>) => void): this;
+    addListener(event: 'response', listener: (data: any, method: string, params: Array<any>) => void): this;
+    addListener(event: 'response', listener: (data: TDataPromise) => void): this;
     addListener(event: 'request', listener: (method: string, params: Array<any>) => void): this;
+    addListener(event: 'request', listener: (data: Array<IMethod>) => void): this;
     addListener(event: 'listening', listener: (address: IListenResponse) => void): this;
     addListener(event: 'close', listener: () => void): this;
     addListener(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -269,9 +284,11 @@ export default class RPCServer extends EventEmitter {
     }
 
     on(event: 'error', listener: (error: RpcError) => void): this;
-    on(event: 'response', listener: (data: any, method: string, params: Array<any>) => void): this;
     on(event: 'response', listener: (error: RpcError, method: string, params: Array<any>) => void): this;
+    on(event: 'response', listener: (data: any, method: string, params: Array<any>) => void): this;
+    on(event: 'response', listener: (data: TDataPromise) => void): this;
     on(event: 'request', listener: (method: string, params: Array<any>) => void): this;
+    on(event: 'request', listener: (data: Array<IMethod>) => void): this;
     on(event: 'listening', listener: (address: IListenResponse) => void): this;
     on(event: 'close', listener: () => void): this;
     on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -279,9 +296,11 @@ export default class RPCServer extends EventEmitter {
     }
 
     once(event: 'error', listener: (error: RpcError) => void): this;
-    once(event: 'response', listener: (data: any, method: string, params: Array<any>) => void): this;
     once(event: 'response', listener: (error: RpcError, method: string, params: Array<any>) => void): this;
+    once(event: 'response', listener: (data: any, method: string, params: Array<any>) => void): this;
+    once(event: 'response', listener: (data: TDataPromise) => void): this;
     once(event: 'request', listener: (method: string, params: Array<any>) => void): this;
+    once(event: 'request', listener: (data: Array<IMethod>) => void): this;
     once(event: 'listening', listener: (address: IListenResponse) => void): this;
     once(event: 'close', listener: () => void): this;
     once(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -289,9 +308,11 @@ export default class RPCServer extends EventEmitter {
     }
 
     removeListener(event: 'error', listener: (error: RpcError) => void): this;
-    removeListener(event: 'response', listener: (data: any, method: string, params: Array<any>) => void): this;
     removeListener(event: 'response', listener: (error: RpcError, method: string, params: Array<any>) => void): this;
+    removeListener(event: 'response', listener: (data: any, method: string, params: Array<any>) => void): this;
+    removeListener(event: 'response', listener: (data: TDataPromise) => void): this;
     removeListener(event: 'request', listener: (method: string, params: Array<any>) => void): this;
+    removeListener(event: 'request', listener: (data: Array<IMethod>) => void): this;
     removeListener(event: 'listening', listener: (address: IListenResponse) => void): this;
     removeListener(event: 'close', listener: () => void): this;
     removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -299,9 +320,11 @@ export default class RPCServer extends EventEmitter {
     }
 
     off(event: 'error', listener: (error: RpcError) => void): this;
-    off(event: 'response', listener: (data: any, method: string, params: Array<any>) => void): this;
     off(event: 'response', listener: (error: RpcError, method: string, params: Array<any>) => void): this;
+    off(event: 'response', listener: (data: any, method: string, params: Array<any>) => void): this;
+    off(event: 'response', listener: (data: TDataPromise) => void): this;
     off(event: 'request', listener: (method: string, params: Array<any>) => void): this;
+    off(event: 'request', listener: (data: Array<IMethod>) => void): this;
     off(event: 'listening', listener: (address: IListenResponse) => void): this;
     off(event: 'close', listener: () => void): this;
     off(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -322,6 +345,7 @@ export default class RPCServer extends EventEmitter {
     emit(event: 'response', data: TDataPromise): boolean;
     emit(event: 'response', data: any, method?: string, params?: Array<any>): boolean;
     emit(event: 'request', method: string, params: Array<any>): boolean;
+    emit(event: 'request', data: Array<IMethod>): boolean;
     emit(event: 'listening', address: IListenResponse): boolean;
     emit(event: 'close'): boolean;
     emit(event: string | symbol, ...args: any[]): boolean {

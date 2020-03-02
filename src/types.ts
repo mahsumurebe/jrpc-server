@@ -1,4 +1,5 @@
 import {IMethod} from './Adapters/types';
+import {RequestHandlerParams} from 'express-serve-static-core';
 
 export interface IRPCServerConfig {
     hostname: string;
@@ -8,7 +9,8 @@ export interface IRPCServerConfig {
         use: boolean;
         certFile: string;
         privateKey: string;
-    }
+    },
+    middleware?: Array<RequestHandlerParams>
 }
 
 export interface IListenResponse {
