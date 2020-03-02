@@ -1,5 +1,5 @@
 {
-  "name": "jrpc-server",
+  "name": "jsonrpc-server",
   "version": "1.0.1",
   "description": "JSONRPC Server",
   "main": "lib/index.js",
