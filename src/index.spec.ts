@@ -7,7 +7,7 @@ let server: RPCServer;
 describe('Testing server', () => {
     beforeAll(() => {
         server = new RPCServer({
-            bind: '127.0.0.1',
+            hostname: '127.0.0.1',
             port,
         });
     });
