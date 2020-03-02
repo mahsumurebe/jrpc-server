@@ -6,9 +6,17 @@ let server: RPCServer;
 
 async function init() {
     console.log('starting server');
+    const basicAuth = require('express-basic-auth');
     server = new RPCServer({
         hostname: '127.0.0.1',
         port,
+        middleware: [
+            basicAuth({
+                users: {
+                    admin: 'password',
+                },
+            }),
+        ],
     });
 
     server.on('listening', address => {
@@ -16,8 +24,8 @@ async function init() {
     });
     server.on('close', () => console.log('Server closed.'));
     server.on('error', (e) => console.error(`An error occurred.`, e));
-    server.on('request', (method, params: Array<any>) => console.log(`REQUEST: ${method}(${(params || []).join(', ')})`));
-    server.on('response', (data, method, params) => console.log(`RESPONSE: ${method}(${(params || []).join(', ')})\n${JSON.stringify(data)}`));
+    server.on('request', (method, params: Array<any>) => console.log(`REQUEST:`, method, params));
+    server.on('response', (data, method, params) => console.log(`RESPONSE:`, data, method, params));
     await server.listen();
     console.log('add method');
     server.methods.add('help', () => {
