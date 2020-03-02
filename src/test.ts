@@ -7,12 +7,12 @@ let server: RPCServer;
 async function init() {
     console.log('starting server');
     server = new RPCServer({
-        bind: '127.0.0.1',
+        hostname: '127.0.0.1',
         port,
     });
 
     server.on('listening', address => {
-        console.log(`Listening on http://${address.bind}:${address.port}${address.path}`);
+        console.log(`Listening on ${address.toString()}`);
     });
     server.on('close', () => console.log('Server closed.'));
     server.on('error', (e) => console.error(`An error occurred.`, e));
