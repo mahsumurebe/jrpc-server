@@ -15,7 +15,7 @@ npm install @mahsumurebe/jrpc-server
 
 ## Usage
 
-Bir server yansıması oluşturulmalı.
+It should not create a Server Class instance.
 
 ```typescript
 const server = new RPCServer({
@@ -24,7 +24,7 @@ const server = new RPCServer({
 });
 ```
 
-Server yansıması oluşturulduktan sonra metod tanımlamaları yapılır. 
+Method definitions are after Server Class instance is created.
 
 ```typescript
 server.methods.add('help', () => {
@@ -36,9 +36,9 @@ server.methods.add('sum', (a:number, b:number) => {
 });
 ```
 
-Metodlar tanımlandıktan sonra `listen` metodu tetiklenir. 
-Listen Promise nesnesi döndürür. 
-Promise çıktısı `IListenResponse` arayüzüdür.
+After the methods are defined, the 'listen' method is triggered.
+Listen returns the Promise object.
+Promise output is the 'IListenResponse' interface.
 
 ```typescript
 server.listen()
@@ -47,7 +47,7 @@ server.listen()
 
 # Testing
 
-cURL isteği gönderip test etmek için aşağıdaki kodu kullanabilirsiniz.
+You can use the code below to send and test the cURL request.
 
 ```shell script
 curl -H "Content-Type: application/json" -d "{\"id\":2,\"method\":\"sum\",\"params\":[1,2]}" http://127.0.0.1:3000
