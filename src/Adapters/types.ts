@@ -1,4 +1,6 @@
 export interface IMethod {
+    id?: number
+    jsonrpc: '2.0';
     method: string;
     params: Array<any>
 }
