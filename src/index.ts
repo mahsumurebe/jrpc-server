@@ -133,6 +133,10 @@ export default class RPCServer extends EventEmitter {
     }
 
     private sendOutput(res: core.Response, responses: Array<TDataPromise>) {
+        if (!responses) {
+            res.sendStatus(204).end();
+            return;
+        }
         for (let item of responses) {
             if (item.data instanceof Error) {
                 if (!(item.data instanceof RpcError)) {
@@ -189,11 +193,15 @@ export default class RPCServer extends EventEmitter {
                                     ]);
                                     throw e;
                                 });
+                            if (Object.keys(method).indexOf('id') === -1 || !method.id) {
+                                continue;
+                            }
                             promises.push(promise);
                         }
                         return Promise.all<TDataPromise>(promises);
                     })
                     .then(data => {
+                        console.log(data);
                         if (!data.length) {
                             self.emit('response', data);
                             return self.sendOutput(res, null);
