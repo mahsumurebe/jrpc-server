@@ -15,7 +15,6 @@ export interface IErrorInline {
 export interface IErrorResponse {
     id: number;
     error: IErrorInline,
-    result?: null
 }
 
 export interface IResponse<R = any> {

@@ -146,7 +146,7 @@ export default class RPCServer extends EventEmitter {
                         parent: item.data,
                     });
                 }
-                if (item.data instanceof RpcError) {
+                if (item.data instanceof RpcError && responses.length === 1) {
                     res.status(item.data.httpStatusCode);
                 }
             }
@@ -184,14 +184,10 @@ export default class RPCServer extends EventEmitter {
                                     };
                                 })
                                 .catch(e => {
-                                    self.emit('response', e, method.method, method.params);
-                                    self.sendOutput(res, [
-                                        {
-                                            data: e,
-                                            method,
-                                        },
-                                    ]);
-                                    throw e;
+                                    return {
+                                        method,
+                                        data: e,
+                                    };
                                 });
                             if (Object.keys(method).indexOf('id') === -1 || !method.id) {
                                 continue;
@@ -201,7 +197,6 @@ export default class RPCServer extends EventEmitter {
                         return Promise.all<TDataPromise>(promises);
                     })
                     .then(data => {
-                        console.log(data);
                         if (!data.length) {
                             self.emit('response', data);
                             return self.sendOutput(res, null);
@@ -215,7 +210,12 @@ export default class RPCServer extends EventEmitter {
                         self.sendOutput(res, data);
                     })
                     .catch(e => {
-                        this.sendOutput(res, e);
+                        this.sendOutput(res, [
+                            {
+                                method: null,
+                                data: e,
+                            },
+                        ]);
                     });
             });
     }
