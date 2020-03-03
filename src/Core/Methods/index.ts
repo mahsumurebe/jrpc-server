@@ -15,7 +15,7 @@ export default class Methods {
 
     exists(method: string): boolean {
         return this.names()
-            .indexOf(method) >= -1;
+            .indexOf(method) > -1;
     }
 
     call<T = any>(method: string, ...args: any): Promise<T> {
