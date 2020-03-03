@@ -1,14 +1,16 @@
-import {IAdapter, IErrorInline, IErrorResponse, IResponse} from '../types';
+import {IAdapter, IErrorInline, IErrorResponse, IMethod, IResponse} from '../types';
 import {RpcError, RpcErrorCode, RpcErrorMessage} from '../../Core/Errors';
-import {IJSONRPCMethod} from './types';
 import {TDataPromise} from '../../types';
 
 export default class JSONRPC implements IAdapter {
 
-    async checkRequest(data: IJSONRPCMethod | Array<IJSONRPCMethod>): Promise<Array<IJSONRPCMethod>> {
-        const checkKeys = (item: IJSONRPCMethod) => {
+    async checkRequest(data: IMethod | Array<IMethod>): Promise<Array<IMethod>> {
+        const checkKeys = (item: IMethod) => {
             const keys = Object.keys(item);
-            const check = keys.indexOf('method') > -1 && keys.indexOf('params') > -1 && keys.indexOf('id') > -1;
+            const check = keys.indexOf('method') > -1
+                && keys.indexOf('params') > -1
+                && keys.indexOf('jsonrpc') > -1
+                && item.jsonrpc === '2.0';
 
             if (!check) {
                 throw RpcError.fromJSON({
@@ -29,7 +31,7 @@ export default class JSONRPC implements IAdapter {
         }
     }
 
-    convert(data: Array<TDataPromise<IJSONRPCMethod>>): Array<IResponse | IErrorResponse> {
+    convert(data: Array<TDataPromise>): Array<IResponse | IErrorResponse> {
         const convertErr = (e: RpcError | Error): IErrorInline => {
             const out: IErrorInline = {
                 message: null,
@@ -49,7 +51,8 @@ export default class JSONRPC implements IAdapter {
         };
 
         return data.map(item => {
-            const id = item.method && item.method.id ? item.method.id : 1;
+            const id = item.method && item.method.id ? item.method.id : null;
+            const jsonrpc = item.method && item.method.jsonrpc ? item.method.jsonrpc : '2.0';
             if (item.data instanceof Error) {
                 if (!(item.data instanceof RpcError)) {
                     item.data = RpcError.fromJSON({
@@ -60,13 +63,14 @@ export default class JSONRPC implements IAdapter {
                 }
                 return {
                     id,
-                    result: null,
+                    jsonrpc,
                     error: convertErr(item.data),
                 };
             }
 
             return {
                 id,
+                jsonrpc,
                 result: item.data,
             };
         });
