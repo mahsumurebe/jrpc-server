@@ -1,9 +1,10 @@
 {
   "name": "@mahsumurebe/jrpc-server",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "JSONRPC Server",
   "main": "lib/index.js",
   "scripts": {
+    "prebuild": "rm -rf lib/*",
     "prepare": "npm run build",
     "test:file": "tsc && node lib/test.js",
     "test": "jest",
