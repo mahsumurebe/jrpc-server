@@ -234,7 +234,7 @@ export default class RPCServer extends EventEmitter {
         return new Promise<IListenResponse>((resolve, reject) => {
             try {
                 self.server = this.server.listen(this.config.port, this.config.hostname, () => {
-                    resolve();
+                    resolve(addressInfo);
                 });
             } catch (e) {
                 reject(e);
@@ -262,7 +262,7 @@ export default class RPCServer extends EventEmitter {
         return new Promise<true>((resolve, reject) => {
             this.server.close(err => {
                 if (!err) {
-                    resolve();
+                    resolve(true);
                     return;
                 }
                 reject(err);
