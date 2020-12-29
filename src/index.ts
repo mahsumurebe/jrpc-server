@@ -147,6 +147,7 @@ export default class RPCServer extends EventEmitter {
                     });
                 }
                 if (item.data instanceof RpcError && responses.length === 1) {
+                    this.emit('error', item.data);
                     res.status(item.data.httpStatusCode);
                 }
             }
