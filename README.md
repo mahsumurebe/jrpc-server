@@ -4,6 +4,12 @@ Typed JSONRPC 2.0 Server for Nodejs.
 
 Fully tested to comply with the official [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification)
 
+![minzipped-size](https://img.shields.io/bundlephobia/minzip/@mahsumurebe/jrpc-server/1.0.4?style=for-the-badge)
+![minfied-size](https://img.shields.io/bundlephobia/min/@mahsumurebe/jrpc-server/1.0.4?style=for-the-badge)
+![issues-open](https://img.shields.io/github/issues/mahsumurebe/chip-8-go?style=for-the-badge)
+![issues-closed](https://img.shields.io/github/issues-closed/mahsumurebe/chip-8-go?style=for-the-badge)
+![license](https://img.shields.io/github/license/mahsumurebe/jrpc-server?style=for-the-badge)
+
 ## Quick Overview
 
 It is used to quickly create JSONRPC Server. Method definition is very simple. With the event structure, events can be easily followed.
