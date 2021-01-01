@@ -4,6 +4,7 @@ Typed JSONRPC 2.0 Server for Nodejs.
 
 Fully tested to comply with the official [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification)
 
+![GitHub package.json version](https://img.shields.io/github/package-json/v/mahsumurebe/jrpc-server?style=for-the-badge)
 ![Libraries.io SourceRank, scoped npm package](https://img.shields.io/librariesio/sourcerank/npm/@mahsumurebe/jrpc-server?style=for-the-badge)
 ![minzipped-size](https://img.shields.io/bundlephobia/minzip/@mahsumurebe/jrpc-server/1.1.3?style=for-the-badge)
 ![minfied-size](https://img.shields.io/bundlephobia/min/@mahsumurebe/jrpc-server/1.1.3?style=for-the-badge)
