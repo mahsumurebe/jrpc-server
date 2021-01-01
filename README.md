@@ -7,6 +7,7 @@ Fully tested to comply with the official [JSON-RPC 2.0 specification](https://ww
 ![GitHub package.json version](https://img.shields.io/github/package-json/v/mahsumurebe/jrpc-server?style=for-the-badge)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/mahsumurebe/jrpc-server?style=for-the-badge)
 ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/mahsumurebe/jrpc-server?style=for-the-badge)
+![npm](https://img.shields.io/npm/dt/@mahsumurebe/jrpc-server?style=for-the-badge)
 
 ![Libraries.io SourceRank, scoped npm package](https://img.shields.io/librariesio/sourcerank/npm/@mahsumurebe/jrpc-server?style=for-the-badge)
 ![minzipped-size](https://img.shields.io/bundlephobia/minzip/@mahsumurebe/jrpc-server/1.1.3?style=for-the-badge)
