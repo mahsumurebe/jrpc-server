@@ -7,13 +7,13 @@
  */
 export interface HttpAdapterSSLConfigInterface {
   /**
-   * Certificate file path
+   * Certificate
    *
    * @type {string}
    */
-  certFile: string;
+  cert: string;
   /**
-   * Private key file path
+   * Private key
    *
    * @type {string}
    */

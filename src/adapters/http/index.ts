@@ -82,7 +82,7 @@ export class HttpAdapter extends AdapterAbstract<
     if (this.config.ssl) {
       const httpsOptions: https.ServerOptions = {
         ...options,
-        cert: this.config.ssl.certFile,
+        cert: this.config.ssl.cert,
         key: this.config.ssl.privateKey,
       };
       this.server = https.createServer(httpsOptions, (...args) =>
