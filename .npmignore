@@ -1,4 +1,10 @@
-node_modules/
 .idea/
+.github/
+node_modules/
 src/
-lib/test.*
+tests/
+.eslintrc.js
+.gitignore
+jest.config.json
+tsconfig*.json
+*.tgz
