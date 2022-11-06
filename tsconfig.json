@@ -5,6 +5,7 @@
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "baseUrl": "./",
+    "rootDir": "./src",
     "outDir": "./lib",
     "sourceMap": true,
     "esModuleInterop": true
