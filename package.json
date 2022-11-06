@@ -7,7 +7,7 @@
     "prepack": "npm run build",
     "prebuild": "rimraf lib",
     "build": "tsc -p tsconfig.build.json",
-    "test": "jest --detectOpenHandles",
+    "test": "jest --runInBand --detectOpenHandles",
     "test:watch": "jest --watchAll"
   },
   "repository": {
