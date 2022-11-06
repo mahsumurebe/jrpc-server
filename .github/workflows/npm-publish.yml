@@ -2,7 +2,7 @@ name: Node.js Package
 
 on:
   release:
-    types: [created]
+    types: [ created ]
 
 jobs:
   build:
@@ -12,8 +12,11 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
+      - run: npm i --package-lock-only
       - run: npm ci
       - run: npm test
+        env:
+          DEBUG=jrpc:*
 
   publish-npm:
     needs: build
