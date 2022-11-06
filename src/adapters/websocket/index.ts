@@ -149,6 +149,6 @@ export class WebsocketAdapter extends AdapterAbstract {
       client.close(1000);
     });
     this.server.close();
-    return this.httpAdapter.listen();
+    return this.httpAdapter.shutdown();
   }
 }
