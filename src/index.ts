@@ -74,7 +74,7 @@ export class JRPCServer {
     debug("initializing app");
     this.methods = options?.methodManager ?? new MethodManager();
     this.routerManager =
-      options.routerManager ??
+      options?.routerManager ??
       new RouterManager(this.methods, {
         paramType: options?.paramType ?? "array",
         validator: options?.validator ?? validator,

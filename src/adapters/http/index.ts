@@ -2,6 +2,7 @@ import * as http from "http";
 import { IncomingMessage, ServerResponse } from "http";
 import * as https from "https";
 import * as URL from "url";
+import { Socket } from "net";
 import {
   AdapterAbstract,
   InvalidRequestException,
@@ -51,6 +52,12 @@ export class HttpAdapter extends AdapterAbstract<
   public server: http.Server | https.Server;
 
   /**
+   * Sockets
+   * @protected
+   */
+  protected sockets: { [socketId: string]: Socket } = {};
+
+  /**
    * Server is started
    *
    * @protected
@@ -93,6 +100,19 @@ export class HttpAdapter extends AdapterAbstract<
         this.requestListener(...args)
       );
     }
+
+    this.server.on("connection", (socket: Socket) => {
+      const socketId = Object.keys(this.sockets).length;
+      this.sockets[socketId] = socket;
+      debug(`socket ${socketId} opened`);
+
+      socket.on("close", () => {
+        debug(`removing ${socketId} socket on sockets object`);
+        delete this.sockets[socketId];
+      });
+
+      socket.setTimeout(4000);
+    });
   }
 
   /**
@@ -174,6 +194,11 @@ export class HttpAdapter extends AdapterAbstract<
 
       await shutdownPromise.catch((e) => {
         debug("An error occurred while shutdown Http Adapter", e);
+      });
+
+      Object.entries(this.sockets).forEach(([socketId, socket]) => {
+        debug(`socket ${socketId} destroying`);
+        socket.destroy();
       });
     }
     return Promise.resolve();

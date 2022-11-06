@@ -140,6 +140,7 @@ export class WebsocketAdapter extends AdapterAbstract {
    */
   shutdown(): Promise<void> {
     if (!this.isListening()) {
+      debug("is already not listening");
       return Promise.resolve();
     }
 
@@ -148,7 +149,16 @@ export class WebsocketAdapter extends AdapterAbstract {
       debug("closing client");
       client.close(1000);
     });
-    this.server.close();
-    return this.httpAdapter.shutdown();
+    return this.httpAdapter.shutdown().finally(() => {
+      return new Promise<void>((resolve, reject) => {
+        this.server.close((err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
+    });
   }
 }

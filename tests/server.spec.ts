@@ -104,8 +104,8 @@ describe("JRPCServer", () => {
             })
           );
         });
-        it("should be able batch request and return response without notification request", () => {
-          expect(
+        it("should be able batch request and return response without notification request", async () => {
+          await expect(
             client.call([
               {
                 id: 1,
@@ -286,8 +286,8 @@ describe("JRPCServer", () => {
             })
           );
         });
-        it("should be able batch request and return response without notification request", () => {
-          expect(
+        it("should be able batch request and return response without notification request", async () => {
+          await expect(
             client.call([
               {
                 id: 1,
