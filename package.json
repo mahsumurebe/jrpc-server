@@ -22,7 +22,7 @@
   "license": "MIT",
   "types": "lib/index.d.ts",
   "devDependencies": {
-    "@mahsumurebe/jrpc-client": "^2.0.0",
+    "@mahsumurebe/jrpc-client": "^2.0.2",
     "@types/debug": "^4.1.7",
     "@types/jest": "^29.2.0",
     "@types/node": "^18.11.7",
