@@ -22,9 +22,7 @@ describe("JRPCServer", () => {
         })
       );
       client = await generateJRPCClient(
-        new Client.HttpAdapter({
-          hostname: "localhost",
-          port: 3000,
+        new Client.HttpAdapter("http://localhost:3000", {
           timeout: 2_000,
         })
       );
@@ -204,9 +202,7 @@ describe("JRPCServer", () => {
         })
       );
       client = await generateJRPCClient(
-        new Client.WebsocketAdapter({
-          hostname: "localhost",
-          port: 3000,
+        new Client.WebsocketAdapter("ws://localhost:3000", {
           timeout: 2_000,
         })
       );
