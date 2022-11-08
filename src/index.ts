@@ -51,7 +51,10 @@ const debug = require("debug")("jrpc:server");
  *   )
  * );
  */
-export class JRPCServer {
+export class JRPCServer<
+  Request extends RequestExtendAbstract = RequestExtendAbstract,
+  Response extends ResponseExtendAbstract = ResponseExtendAbstract
+> {
   /**
    * Method Manager
    *
@@ -68,7 +71,7 @@ export class JRPCServer {
   protected readonly routerManager: RouterManagerAbstract;
 
   constructor(
-    protected readonly adapter: AdapterAbstract,
+    protected readonly adapter: AdapterAbstract<Request, Response>,
     options?: JRPCServerOptionsInterface
   ) {
     debug("initializing app");

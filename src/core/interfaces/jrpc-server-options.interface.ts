@@ -16,6 +16,11 @@ import { JRPCRequestBodyInterface } from "./jrpc-request-body.interface";
  * @interface
  */
 export interface JRPCServerOptionsInterface {
+  /**
+   * Parameter type for validating
+   *
+   * @type {string}
+   */
   paramType?: "object" | "array";
   /**
    * Method Manager

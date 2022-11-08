@@ -4,18 +4,17 @@
     "module": "commonjs",
     "allowSyntheticDefaultImports": true,
     "declaration": true,
-    "baseUrl": "./",
-    "rootDir": "./src",
+    "rootDir": "./",
     "outDir": "./lib",
     "sourceMap": true,
     "esModuleInterop": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "tests/**/*"
   ],
   "exclude": [
-    "node_modules",
-    "**/*.spec.ts"
+    "node_modules"
   ],
   "ts-node": {
     "require": [
