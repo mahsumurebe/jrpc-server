@@ -2,16 +2,23 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "commonjs",
+    "allowSyntheticDefaultImports": true,
     "declaration": true,
+    "rootDir": "./",
     "outDir": "./lib",
     "sourceMap": true,
     "esModuleInterop": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "tests/**/*"
   ],
   "exclude": [
-    "node_modules",
-    "**/*.spec.ts"
-  ]
+    "node_modules"
+  ],
+  "ts-node": {
+    "require": [
+      "tsconfig-paths/register"
+    ]
+  }
 }
