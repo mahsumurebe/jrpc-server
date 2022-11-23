@@ -3,6 +3,14 @@
   "version": "2.2.0",
   "description": "JSONRPC 2.0 NodeJS Server written in TypeScript",
   "main": "lib/index.js",
+  "keywords": [
+    "websocket",
+    "http-server",
+    "jsonrpc",
+    "jsonrpc2",
+    "jsonrpc-server",
+    "jsonrpc-lib"
+  ],
   "scripts": {
     "prepack": "npm run build",
     "prebuild": "rimraf lib",
@@ -22,7 +30,7 @@
   "license": "MIT",
   "types": "lib/index.d.ts",
   "devDependencies": {
-    "@mahsumurebe/jrpc-client": "^2.0.2",
+    "@mahsumurebe/jrpc-client": "^2.2.0",
     "@types/debug": "^4.1.7",
     "@types/jest": "^29.2.0",
     "@types/node": "^18.11.7",
