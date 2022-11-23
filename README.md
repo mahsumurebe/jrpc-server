@@ -195,4 +195,4 @@ const instance = new JRPCServer(websocketAdapter);
 
 ## Resources
 
-- [Changelog](https://github.com/mahsumurebe/jrpc-server/blob/development/CHANGELOG.md)
+- [Changelog](./CHANGELOG.md)
